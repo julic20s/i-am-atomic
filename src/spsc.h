@@ -1,3 +1,7 @@
+#pragma once
+#ifndef I_AM_ATOMIC_SPSC_H_
+#define I_AM_ATOMIC_SPSC_H_
+
 #include <atomic>
 #include <cstddef>
 #include <memory>
@@ -5,11 +9,9 @@
 
 #include "false_sharing.h"
 
-constexpr bool avoiding_false_sharing = false;
-
 // BasicSpscQueue provide the atomic head tail readwrite.
 // Storage is responsible for elements storage.
-template <class Storage>
+template <class Storage, bool ForceAvoidingFalseSharing = false>
 class BasicSpscQueue : Storage {
  public:
   template <class... Args>
@@ -58,8 +60,8 @@ class BasicSpscQueue : Storage {
   bool Empty() const noexcept { return Size() == 0; }
 
  private:
-  EnableCachelineAlignedIf<avoiding_false_sharing, std::atomic_size_t> head_;
-  EnableCachelineAlignedIf<avoiding_false_sharing, std::atomic_size_t> tail_;
+  EnableCachelineAlignedIf<ForceAvoidingFalseSharing, std::atomic_size_t> head_;
+  EnableCachelineAlignedIf<ForceAvoidingFalseSharing, std::atomic_size_t> tail_;
 };
 
 template <class T, class Alloc = std::allocator<T>>
@@ -120,3 +122,5 @@ using SpscQueueDefaultStorage = std::conditional_t<
 
 template <class T = void>
 using SpscQueue = BasicSpscQueue<SpscQueueDefaultStorage<T>>;
+
+#endif  // I_AM_ATOMIC_SPSC_H_
